@@ -155,20 +155,15 @@ def reconstruction_accuracy_with_agent_replace(model, linear_model, test_loader,
                 for layer in range(n_layers)
             ]  # list of [batch, hidden]
 
-            # [batch, layers, hidden]
             all_acts = torch.stack(all_acts, dim=1)
 
-            # [batch, layers * hidden]
             all_acts = all_acts.reshape(all_acts.shape[0], -1)
 
-            # Linear probe
             logits = linear_model(all_acts)          # [batch, 25]
             preds = torch.argmax(logits, dim=-1)     # [batch]
 
-            # Convert to binary grid
             preds = F.one_hot(preds, num_classes=25).float()
 
-            # Exact match per example
             exact_match = torch.all(preds == goal_grid, dim=1)
 
             correct += exact_match.sum().item()
@@ -243,20 +238,22 @@ def analyze_individual_neurons(model, linear_model, device):
     ])
 
     with torch.no_grad():
-        for x in range(5):
-            for y in range(5):
-                if x == 0 and y == 0:
-                    continue
-                    
-                data = generate_simple_example((0, 0), (x, y))
-                text = data["inputs"]["simple"]
-
-                _, cache = model.run_with_cache(text)
-
-                for l in range(n_layers):
-                    acts = cache["resid_pre", l][:, -1].squeeze(0)
-                    for n in range(d_model):
-                        activations[l, n, x, y] = acts[n].item()
+        for a_i in range(5):
+            for a_j in range(5):
+                for x in range(5):
+                    for y in range(5):
+                            
+                        data = generate_simple_example((a_i, a_j), (x, y))
+                        text = data["inputs"]["simple"]
+        
+                        _, cache = model.run_with_cache(text)
+        
+                        for l in range(n_layers):
+                            acts = cache["resid_pre", l][:, -1].squeeze(0)
+                            for n in range(d_model):
+                                activations[l, n, x, y] += acts[n].item()
+                                
+    activations = activations / 25.
     means = np.zeros((n_layers, d_model, 5, 5))
     means_for_std = np.zeros((n_layers, d_model))
 
@@ -264,11 +261,8 @@ def analyze_individual_neurons(model, linear_model, device):
         for n in range(d_model):
             for x in range(5):
                 for y in range(5):
-                    if x == 0 and y == 0:
-                        continue
                         
-                    # 23 because we also remove (0, 0) which is never a goal in our setup
-                    means[l, n, x, y] = (np.sum(activations[l][n]) - activations[l][n][x][y]) / 23.
+                    means[l, n, x, y] = (np.sum(activations[l][n]) - activations[l][n][x][y]) / 24.
                         
     specificity = activations - means
     
@@ -277,11 +271,6 @@ def analyze_individual_neurons(model, linear_model, device):
 
     for x in range(5):
         for y in range(5):
-            if x == 0 and y == 0:
-                # don't need those
-                max_indices[x, y] = [-1, -1]
-                max_values[x, y] = np.nan
-                continue
 
             slice_xy = specificity[:, :, x, y] # shape (L, N)
 

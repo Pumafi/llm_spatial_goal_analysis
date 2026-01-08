@@ -151,19 +151,21 @@ def make_random_grid_dataset(nb_samples, height=5, width=5):
 def make_determinist_grid_dataset(nb_samples, agent, height=5, width=5):
 
     dataset = []
-
-    for i in range(height):
-        for j in range(width):
-            goal = (i, j)
-            if goal != agent:
-                example = generate_simple_example(
-                    height=height,
-                    width=width,
-                    agent=agent,
-                    goal=goal,
-                )
-        
-                dataset.append(example)
+    for k in range(height):
+        for h in range(width):
+            agent = (k, h)
+            for i in range(height):
+                for j in range(width):
+                    goal = (i, j)
+                    if goal != agent:
+                        example = generate_simple_example(
+                            height=height,
+                            width=width,
+                            agent=agent,
+                            goal=goal,
+                        )
+                
+                        dataset.append(example)
     return dataset
 
 def visualize_binary_grid(goal_grid, agent_grid, h=5, w=5):

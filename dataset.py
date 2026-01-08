@@ -9,8 +9,8 @@ class GridTextDataset(Dataset):
         self,
         full_dataset,
         mode="train",
-        train_ratio=1.0,
-        valid_ratio=0.0
+        train_ratio=0.8,
+        valid_ratio=0.1
     ):
         """
         full_dataset: list of dicts (your original data)
@@ -84,11 +84,13 @@ def gridtext_collate_fn(batch):
 def get_dataloader(
     full_dataset,
     batch_size=8,
-    num_workers=4
+    num_workers=4,
+    train_ratio=0.8,
+    valid_ratio=0.1
 ):
-    train_dataset = GridTextDataset(full_dataset, mode="train")
-    valid_dataset = GridTextDataset(full_dataset, mode="valid")
-    test_dataset  = GridTextDataset(full_dataset, mode="test")
+    train_dataset = GridTextDataset(full_dataset, mode="train", train_ratio=train_ratio, valid_ratio=valid_ratio)
+    valid_dataset = GridTextDataset(full_dataset, mode="valid", train_ratio=train_ratio, valid_ratio=valid_ratio)
+    test_dataset  = GridTextDataset(full_dataset, mode="test", train_ratio=train_ratio, valid_ratio=valid_ratio)
 
     print("Training dataset len:", len(train_dataset))
     print("Validation dataset len:", len(valid_dataset))
