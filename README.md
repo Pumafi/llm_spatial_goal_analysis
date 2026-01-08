@@ -25,7 +25,7 @@ They focus heavily on the LLM’s representation of the agent in the grid, and n
 Thus, the study aimed to learn information about the representation of spatial goals in an LLM using the following tools:
 
 * **MODEL**: Inspired by [1], I use LLaMA-3.1-8B throughout the experiment.
-* **DATASET**: I generated a very simple dataset of instructions and locations on a 5×5 grid.
+* **DATASET**: I generated a very simple dataset of instructions and locations on a $5 \times 5$ grid.
 * **METHODS**: (1) A linear classifier was used to reconstruct the grid from model activations; (2) PCA was then applied to the relevant activations to learn more about their structure.
 
 ## Key Results
@@ -68,22 +68,28 @@ The dataset contains 625 prompts, one for each possible agent and goal position.
 
 The first step in studying goal representation was to verify **whether** and **where** the model’s internal representation of the goal could be linearly mapped to the grid.
 
-Let ( h_l \in \mathbb{R}^d ) denote the model’s residual stream representation on the last token of the prompt at layer ( l ). We concatenate the activations of all 32 layers of the model into a single representation:
-[
+Let $h_l \in \mathbb{R}^d$ denote the model’s residual stream representation on the last token of the prompt at layer $l$. We concatenate the activations of all 32 layers of the model into a single representation:
+$
+\begin{equation}
 H = [h_0, h_1, \dots, h_{31}] \in \mathbb{R}^{32d}.
-]
+\end{equation}
+$
 
-We train a linear classifier to predict the goal location on the (5 \times 5) grid from (H):
-[
+We train a linear classifier to predict the goal location on the $5 \times 5$ grid from $H$:
+$
+\begin{equation}
 \hat{y} = \mathrm{softmax}(W H + b),
-]
-where ( W \in \mathbb{R}^{25 \times 32d} ) and ( b \in \mathbb{R}^{25} ).
+\end{equation}
+$
+where $W \in \mathbb{R}^{25 \times 32d}$ and $b \in \mathbb{R}^{25}$.
 
 The model is trained using categorical cross-entropy loss:
-[
+$
+\begin{equation}
 \mathcal{L} = - \sum_{i=1}^{25} y_i \log \hat{y}_i,
-]
-where ( y \in {0,1}^{25} ) is the one-hot encoding of the true goal position.
+\end{equation}
+$
+where $y \in {0,1}^{25}$ is the one-hot encoding of the true goal position.
 
 This setup is closely related to a one-vs-rest linear probing scheme from [3].
 
@@ -93,7 +99,7 @@ This setup is closely related to a one-vs-rest linear probing scheme from [3].
 
 After training the linear classifier multiple times, we obtain accuracies ranging from **0.65 to 0.75**, which is well above the random accuracy of 0.04.
 
-To identify which layers the linear classifier relies on, we ablate all layers but one and study the performance of the linear model when using only that single layer. Performance is measured using accuracy and (R^2).
+To identify which layers the linear classifier relies on, we ablate all layers but one and study the performance of the linear model when using only that single layer. Performance is measured using accuracy and $R^2$.
 
 ![Left: Accuracy of the linear classifier when using only each layer; Right: R² of the linear classifier when using only each layer](./images/layer_identification_curves.png)
 
@@ -171,13 +177,14 @@ We observe similar trends when plotting 2D PCA projections for other agent posit
 To quantify this intuition, we plot the relationship between (1) Manhattan distance between agent and goal positions and (2) Euclidean distance in PCA space.
 
 Because the scale of distances varies across agent positions, we normalize Euclidean distance by the mean distance for each agent:
-[
-\tilde{d}_{\mathrm{PCA}}(a, g) =
-\frac{\left\lVert \mathbf{z}_a - \mathbf{z}*g \right\rVert_2}
-{\frac{1}{|\mathcal{G}|} \sum*{g' \in \mathcal{G}}
-\left\lVert \mathbf{z}*a - \mathbf{z}*{g'} \right\rVert_2}
-]
-where ( \mathbf{z}_a ) and ( \mathbf{z}_g ) are the PCA embeddings of the agent and goal, and ( \mathcal{G} ) denotes all goal positions.
+
+$
+\begin{equation}
+\tilde{d}_{\mathrm{PCA}}(a, g) = \frac{\left\lVert \mathbf{z}_a - \mathbf{z}*g \right\rVert_2}{\frac{1}{|\mathcal{G}|} \sum*{g' \in \mathcal{G}} \left\lVert \mathbf{z}*a - \mathbf{z}*{g'} \right\rVert_2}
+\end{equation}
+$
+
+where $ \mathbf{z}_a $ and $ \mathbf{z}_g $ are the PCA embeddings of the agent and goal, and $\mathcal{G}$ denotes all goal positions.
 
 ![BFS vs Manhattan](./images/bfs_vs_cartesian.png)
 
@@ -214,5 +221,7 @@ Future work could address these limitations. Additional directions I find partic
 ## Bibliography
 
 [1] Martorell, N. (2025). *From Text to Space: Mapping Abstract Spatial Models in LLMs during a Grid-World Navigation Task*. arXiv:2502.16690.
+
 [2] Modell, A., Rubin-Delanchy, P., & Whiteley, N. (2025). *The Origins of Representation Manifolds in Large Language Models*. arXiv:2505.18235.
+
 [3] Chen, Y. et al. (2024). *Designing a Dashboard for Transparency and Control of Conversational AI*. arXiv:2406.07882.
